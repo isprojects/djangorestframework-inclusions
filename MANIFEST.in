@@ -1,0 +1,8 @@
+include *.rst
+include LICENSE
+recursive-include rest_framework_inclusions *.html
+recursive-include rest_framework_inclusions *.txt
+recursive-include rest_framework_inclusions *.po
+global-exclude __pycache__
+global-exclude *.py[co]
+
