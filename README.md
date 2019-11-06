@@ -9,10 +9,10 @@ A django-restframework renderer to side-load related resources.
 [![PyPI][pypi-version]][pypi]
 
 
-[build-status]: https://travis-ci.org/isprojects/rest-framework-inclusions.svg?branch=develop
-[travis]: https://travis-ci.org/isprojects/rest-framework-inclusions
-[coverage]: https://codecov.io/gh/isprojects/rest-framework-inclusions/branch/develop/graph/badge.svg
-[codecov]: https://codecov.io/gh/isprojects/rest-framework-inclusions
+[build-status]: https://travis-ci.org/isprojects/djangorestframework-inclusions.svg?branch=develop
+[travis]: https://travis-ci.org/isprojects/djangorestframework-inclusions
+[coverage]: https://codecov.io/gh/isprojects/djangorestframework-inclusions/branch/develop/graph/badge.svg
+[codecov]: https://codecov.io/gh/isprojects/djangorestframework-inclusions
 [python-versions]: https://img.shields.io/pypi/pyversions/djangorestframework-inclusions.svg
 [django-versions]: https://img.shields.io/pypi/djversions/djangorestframework-inclusions.svg
 [pypi-version]: https://img.shields.io/pypi/v/djangorestframework-inclusions.svg
