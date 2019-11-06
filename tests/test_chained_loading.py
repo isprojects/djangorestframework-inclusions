@@ -1,23 +1,11 @@
 import unittest
 
-from django.test import override_settings
-from django.urls import reverse
-
 from rest_framework.test import APITestCase
+from testapp.models import A, B, C, Child, D, E, Parent, Tag
 
-from ..models import A, B, C, Child, D, E, Parent, Tag
-
-
-class InclusionsMixin:
-    def assertResponseData(self, url_name, expected, params=None, **url_kwargs):
-        url = reverse(url_name, kwargs=url_kwargs)
-
-        response = self.client.get(url, data=params)
-
-        self.assertEqual(response.json(), expected)
+from .mixins import InclusionsMixin
 
 
-@override_settings(ROOT_URLCONF="isp.fixtureapp.fixture_urls")
 class InclusionsLoadInclusionsTests(InclusionsMixin, APITestCase):
     """
     Tests for chained inclusions.
@@ -38,8 +26,8 @@ class InclusionsLoadInclusionsTests(InclusionsMixin, APITestCase):
         expected = {
             "data": [{"id": c.id, "b": b.id}],
             "inclusions": {
-                "fixtureapp.A": [{"id": a.id}],
-                "fixtureapp.B": [{"id": b.id, "a": a.id}],
+                "testapp.A": [{"id": a.id}],
+                "testapp.B": [{"id": b.id, "a": a.id}],
             },
         }
 
@@ -58,7 +46,7 @@ class InclusionsLoadInclusionsTests(InclusionsMixin, APITestCase):
             "previous": None,
             "next": None,
             "data": [{"id": c.id, "b": {"id": b.id, "a": a.id}}],
-            "inclusions": {"fixtureapp.A": [{"id": a.id}]},
+            "inclusions": {"testapp.A": [{"id": a.id}]},
         }
 
         self.assertResponseData("c-list", expected, params={"include": "*"})
@@ -87,7 +75,7 @@ class InclusionsLoadInclusionsTests(InclusionsMixin, APITestCase):
             "next": None,
             "data": [{"id": child.id, "parent": child.parent_id, "tags": [tag2.id]}],
             "inclusions": {
-                "fixtureapp.Parent": [
+                "testapp.Parent": [
                     {
                         "id": parent.id,
                         "name": "parent",
@@ -95,7 +83,7 @@ class InclusionsLoadInclusionsTests(InclusionsMixin, APITestCase):
                         "tags": [tag1.pk],
                     }
                 ],
-                "fixtureapp.Tag": [
+                "testapp.Tag": [
                     {"id": tag1.id, "name": "tag1"},
                     {"id": tag2.id, "name": "tag2"},
                 ],
@@ -121,8 +109,8 @@ class InclusionsLoadInclusionsTests(InclusionsMixin, APITestCase):
         expected = {
             "data": {"id": child2.id, "parent": parent.id},
             "inclusions": {
-                "fixtureapp.Parent": [{"id": parent.id, "favourite_child": child1.pk}],
-                "fixtureapp.Child": [{"id": child1.pk, "parent": parent.id}],
+                "testapp.Parent": [{"id": parent.id, "favourite_child": child1.pk}],
+                "testapp.Child": [{"id": child1.pk, "parent": parent.id}],
             },
         }
 
@@ -160,10 +148,10 @@ class InclusionsLoadInclusionsTests(InclusionsMixin, APITestCase):
             "next": None,
             "data": [{"id": e.id, "d": d.id}],
             "inclusions": {
-                "fixtureapp.D": [
+                "testapp.D": [
                     {"id": d.id, "tags1": [tag1.id], "tags2": [tag1.id, tag3.id]}
                 ],
-                "fixtureapp.Tag": [
+                "testapp.Tag": [
                     {"id": tag1.id, "name": "tag 1"},
                     {"id": tag3.id, "name": "tag 3"},
                 ],

@@ -1,4 +1,3 @@
-from django.test import override_settings
 from django.urls import reverse
 
 from rest_framework.test import APITestCase
@@ -15,29 +14,18 @@ from testapp.models import (
     Tag,
 )
 
-
-class InclusionsMixin:
-    def assertResponseData(self, url_name, expected, params=None, **url_kwargs):
-        url = reverse(url_name, kwargs=url_kwargs)
-
-        response = self.client.get(url, data=params)
-
-        self.assertEqual(response.json(), expected)
+from .mixins import InclusionsMixin
 
 
-@override_settings(ROOT_URLCONF="isp.fixtureapp.fixture_urls")
 class ReferenceTests(InclusionsMixin, APITestCase):
 
     maxDiff = None
 
     @classmethod
     def setUpTestData(cls):
-        tags = [cls.tag1, cls.tag2, cls.tag3] = [
-            Tag(name="you"),
-            Tag(name="are"),
-            Tag(name="it"),
-        ]
-        Tag.objects.bulk_create(tags)
+        cls.tag1 = Tag.objects.create(name="you")
+        cls.tag2 = Tag.objects.create(name="are")
+        cls.tag3 = Tag.objects.create(name="it")
 
         cls.parent1 = Parent.objects.create(name="Papa Johns")
         cls.parent1.tags.set([cls.tag1, cls.tag2])
@@ -53,9 +41,7 @@ class ReferenceTests(InclusionsMixin, APITestCase):
         cls.parent1.favourite_child = cls.child2
         cls.parent1.save()
 
-        cls.childprops = ChildProps.objects.create(
-            child=cls.child2, props={"genre": "Drama/SF", "year": "2006"}
-        )
+        cls.childprops = ChildProps.objects.create(child=cls.child2)
 
         cls.container1 = Container.objects.create(name="container 1")
         cls.container1.save()
@@ -149,7 +135,7 @@ class ReferenceTests(InclusionsMixin, APITestCase):
                 },
             ],
             "inclusions": {
-                "fixtureapp.Tag": [
+                "testapp.Tag": [
                     {"id": self.tag1.id, "name": "you"},
                     {"id": self.tag2.id, "name": "are"},
                 ]
@@ -184,7 +170,7 @@ class ReferenceTests(InclusionsMixin, APITestCase):
                 "tags": [],
             },
             "inclusions": {
-                "fixtureapp.Tag": [
+                "testapp.Tag": [
                     {"id": self.tag1.id, "name": "you"},
                     {"id": self.tag2.id, "name": "are"},
                 ]
@@ -212,16 +198,12 @@ class ReferenceTests(InclusionsMixin, APITestCase):
                 "tags": [],
             },
             "inclusions": {
-                "fixtureapp.Tag": [
+                "testapp.Tag": [
                     {"id": self.tag1.id, "name": "you"},
                     {"id": self.tag2.id, "name": "are"},
                 ],
-                "fixtureapp.ChildProps": [
-                    {
-                        "id": self.childprops.id,
-                        "child": self.child2.pk,
-                        "props": {"genre": "Drama/SF", "year": "2006"},
-                    }
+                "testapp.ChildProps": [
+                    {"id": self.childprops.id, "child": self.child2.pk,}
                 ],
             },
         }
@@ -261,17 +243,13 @@ class ReferenceTests(InclusionsMixin, APITestCase):
                 },
             ],
             "inclusions": {
-                "fixtureapp.Tag": [
+                "testapp.Tag": [
                     {"id": self.tag1.id, "name": "you"},
                     {"id": self.tag2.id, "name": "are"},
                     {"id": self.tag3.id, "name": "it"},
                 ],
-                "fixtureapp.ChildProps": [
-                    {
-                        "id": self.childprops.id,
-                        "child": self.child2.pk,
-                        "props": {"genre": "Drama/SF", "year": "2006"},
-                    }
+                "testapp.ChildProps": [
+                    {"id": self.childprops.id, "child": self.child2.pk,}
                 ],
             },
         }
@@ -292,12 +270,8 @@ class ReferenceTests(InclusionsMixin, APITestCase):
                 "tags": [],
             },
             "inclusions": {
-                "fixtureapp.ChildProps": [
-                    {
-                        "id": self.childprops.id,
-                        "child": self.child2.id,
-                        "props": {"genre": "Drama/SF", "year": "2006"},
-                    }
+                "testapp.ChildProps": [
+                    {"id": self.childprops.id, "child": self.child2.id,}
                 ]
             },
         }
@@ -323,7 +297,7 @@ class ReferenceTests(InclusionsMixin, APITestCase):
                 "tags": [self.tag3.id],
             },
             "inclusions": {
-                "fixtureapp.Tag": [
+                "testapp.Tag": [
                     {"id": self.tag1.id, "name": "you"},
                     {"id": self.tag2.id, "name": "are"},
                     {"id": self.tag3.id, "name": "it"},
@@ -349,17 +323,16 @@ class ReferenceTests(InclusionsMixin, APITestCase):
                     "parent": self.parent1.id,
                     "tags": [self.tag1.id],
                 },
-                "props": {"genre": "Drama/SF", "year": "2006"},
             },
             "inclusions": {
-                "fixtureapp.Tag": [
+                "testapp.Tag": [
                     {"id": self.tag1.id, "name": "you"},
                     {
                         "id": self.tag2.id,
                         "name": "are",
                     },  # included from Parent inclusion
                 ],
-                "fixtureapp.Parent": [
+                "testapp.Parent": [
                     {
                         "id": self.parent1.id,
                         "name": "Papa Johns",
@@ -388,7 +361,7 @@ class ReferenceTests(InclusionsMixin, APITestCase):
                 "name": "container 1",
             },
             "inclusions": {
-                "fixtureapp.Tag": [
+                "testapp.Tag": [
                     {"id": self.tag1.id, "name": "you"},
                     {"id": self.tag3.id, "name": "it"},
                 ]
@@ -429,7 +402,8 @@ class ReferenceTests(InclusionsMixin, APITestCase):
         json = response.json()
         # things should not be wrapped in data
         self.assertEqual(
-            json, {"name": ["Dit veld is verplicht"], "tags": ["Dit veld is verplicht"]}
+            json,
+            {"name": ["This field is required."], "tags": ["This field is required."]},
         )
 
     def test_post_with_non_field_error(self):
@@ -464,7 +438,7 @@ class ReferenceTests(InclusionsMixin, APITestCase):
                 {"id": self.entryB.id, "name": "B", "tags": [self.tag3.id]},
             ],
             "inclusions": {
-                "fixtureapp.Tag": [
+                "testapp.Tag": [
                     {"id": self.tag1.id, "name": "you"},
                     {"id": self.tag3.id, "name": "it"},
                 ]
@@ -494,7 +468,7 @@ class ReferenceTests(InclusionsMixin, APITestCase):
                 {"id": c2.pk, "b": {"id": b2.id, "a": a1.id}},
                 {"id": c3.pk, "b": {"id": b1.id, "a": None}},
             ],
-            "inclusions": {"fixtureapp.A": [{"id": a1.id}]},
+            "inclusions": {"testapp.A": [{"id": a1.id}]},
         }
         self.assertResponseData("c-list", expected, params={"include": "b.a"})
 
@@ -516,6 +490,6 @@ class ReferenceTests(InclusionsMixin, APITestCase):
 
         expected = {
             "data": [{"id": main_object.id, "relatedobject_set": []}],
-            "inclusions": {"fixtureapp.A": []},
+            "inclusions": {"testapp.A": []},
         }
         self.assertResponseData("mainobject-list", expected, params={"include": "*"})

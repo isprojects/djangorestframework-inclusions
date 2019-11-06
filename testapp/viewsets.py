@@ -1,7 +1,8 @@
-from isp.api.renderers import InclusionJSONRenderer
 from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
+
+from rest_framework_inclusions.renderer import InclusionJSONRenderer
 
 from .models import C, Child, ChildProps, Container, E, Entry, MainObject, Parent, Tag
 from .serializers import (

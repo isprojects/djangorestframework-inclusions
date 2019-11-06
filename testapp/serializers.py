@@ -40,9 +40,7 @@ class ParentSerializer(serializers.ModelSerializer):
 
 
 class ParentSerializer2(serializers.ModelSerializer):
-    inclusion_serializers = {
-        "favourite_child": "isp.fixtureapp.inclusions_api.serializers.ChildSerializer3"
-    }
+    inclusion_serializers = {"favourite_child": "testapp.serializers.ChildSerializer3"}
 
     class Meta:
         model = Parent
@@ -88,7 +86,7 @@ class ChildPropsSerializer2(serializers.ModelSerializer):
 
     class Meta:
         model = ChildProps
-        fields = ("id", "child", "props")
+        fields = ("id", "child")
 
 
 class EntrySerializer(serializers.ModelSerializer):

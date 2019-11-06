@@ -1,4 +1,3 @@
-from django.contrib.postgres.fields import JSONField
 from django.db import models
 
 
@@ -39,7 +38,6 @@ class Child(models.Model):
 
 class ChildProps(models.Model):
     child = models.OneToOneField(Child, on_delete=models.PROTECT)
-    props = JSONField()
 
     class Meta:
         ordering = ("id",)  # NOTE: don't do this in real models
