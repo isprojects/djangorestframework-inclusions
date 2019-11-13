@@ -9,6 +9,7 @@ from .data_inclusion import (
     determine_inclusion_definitions,
     extract_inclusions,
     hoist_inclusions,
+    merge_inclusion_definitions,
 )
 
 logger = logging.getLogger(__name__)
@@ -141,6 +142,7 @@ class InclusionJSONRenderer(renderers.JSONRenderer):
         # first sweep - inspect the serializer (graph) structure and figure out
         # which inclusions should all be loaded at the end
         inclusion_definitions = determine_inclusion_definitions(serializer)
+        inclusion_definitions = merge_inclusion_definitions(inclusion_definitions)
 
         # second sweep - populate PK data from the root node
         inclusions = extract_inclusions(

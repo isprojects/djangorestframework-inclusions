@@ -1,3 +1,4 @@
+import copy
 import itertools
 import logging
 from collections import OrderedDict, defaultdict
@@ -17,21 +18,21 @@ class InclusionDefinition:
         self,
         field: Field,
         serializer_class: SerializerMetaclass,
-        data_path: str,
+        data_path: Union[str, List[str]],
         inclusion_path: str = None,
     ):
 
         self.field = field
         self.serializer_class = serializer_class
-        self.data_path = data_path
+        self.data_paths = data_path if isinstance(data_path, list) else [data_path]
         self.inclusion_path = inclusion_path
 
     def __repr__(self):
-        return "%s(field=%r, serializer_class=%r, data_path=%r, inclusion_path=%r)" % (
+        return "%s(field=%r, serializer_class=%r, data_paths=%r, inclusion_path=%r)" % (
             self.__class__.__name__,
             self.field,
             self.serializer_class,
-            self.data_path,
+            self.data_paths,
             self.inclusion_path,
         )
 
@@ -55,6 +56,37 @@ class InclusionDefinition:
     @property
     def model_key(self) -> str:
         return self.queryset.model._meta.label
+
+    @property
+    def roots(self) -> List[str]:
+        return [path.split(".")[0] for path in self.data_paths]
+
+    def is_mergeable_with(self, other: "InclusionDefinition") -> bool:
+        """
+        Determine if an inclusion definition is mergeable with another one.
+
+        Definitions are considered mergeable if:
+        1. the ``inclusion_path`` is None
+        2. both definitions have equivalent querysets (possibly relax this to the same model?)
+        3. both definitions output to the same serializer_class
+        """
+        # 1. no inclusion_paths may be set
+        if self.inclusion_path is not None or other.inclusion_path is not None:
+            return False
+
+        # 2. Both definitions need equivalent querysets.
+        # NOTE: == is id(...) based anyway. This works out because the (automatic)
+        # queryset determination for the field falls back to the _default_manager
+        # .all() queryset (or it's explicitly defined), which is the same object
+        # in memory. This is probably the most fragile part of this check.
+        if self.queryset is not other.queryset:
+            return False
+
+        # 3. Must output to the same serializer
+        if self.serializer_class is not other.serializer_class:
+            return False
+
+        return True
 
 
 class Inclusion:
@@ -240,7 +272,7 @@ def determine_inclusion_definitions(
     serializer: BaseSerializer,
     data_path_start=None,
     inclusion_path_start=None,
-    serializer_classes_seen: set = None,
+    references: dict = None,
 ) -> List[InclusionDefinition]:
     """
     Look at a serializer and determine which data inclusions are encapsulated.
@@ -255,16 +287,7 @@ def determine_inclusion_definitions(
     if hasattr(serializer, "child"):
         serializer = serializer.child
 
-    if serializer_classes_seen is None:
-        serializer_classes_seen = set()
-
     inclusion_definitions = []
-
-    serializer_class = type(serializer)
-    if serializer_class in serializer_classes_seen:
-        return inclusion_definitions
-
-    serializer_classes_seen.add(serializer_class)
 
     for name, field in serializer.fields.items():
 
@@ -272,53 +295,141 @@ def determine_inclusion_definitions(
         if not isinstance(field, (RelatedField, ManyRelatedField, BaseSerializer)):
             continue
 
-        data_path = name if data_path_start is None else f"{data_path_start}.{name}"
-
-        if inclusion_path_start:
-            if ":" not in inclusion_path_start:
-                inclusion_path = f"{inclusion_path_start}:{name}"
-            else:
-                inclusion_path = f"{inclusion_path_start}.{name}"
-        else:
-            inclusion_path = None
+        data_path = get_data_path(data_path_start, name)
+        inclusion_path = get_inclusion_path(inclusion_path_start, name)
 
         # if we're dealing with a nested serializer, we need to recurse
         # TODO: protect against infite recursion
         if isinstance(field, BaseSerializer):
-            inclusion_definitions += determine_inclusion_definitions(
-                field,
-                data_path_start=data_path,
-                serializer_classes_seen=serializer_classes_seen,
-                inclusion_path_start=inclusion_path,
+            inclusion_definitions += get_nested_inclusion_definitions(
+                field, data_path, inclusion_path
             )
-            continue
-
-        # we are now sure we're dealing with a relational field that is not a
-        # nested serializer. Inspect the inclusion definitions
-        inclusion_serializer_class = get_inclusion_serializer_class(serializer, name)
-
-        # very much possible that a FK is set up without inclusions
-        if inclusion_serializer_class is None:
-            continue
-
-        # set up the definition - this is static and no data touches this
-        definition = InclusionDefinition(
-            field=field,
-            serializer_class=inclusion_serializer_class,
-            data_path=data_path,
-            inclusion_path=inclusion_path,
-        )
-        inclusion_definitions.append(definition)
-
-        # check if this serializer has its own inclusions
-        inclusion_definitions += determine_inclusion_definitions(
-            inclusion_serializer_class(),
-            data_path_start=data_path,
-            inclusion_path_start=definition.model_key,
-            serializer_classes_seen=serializer_classes_seen,
-        )
+        else:
+            inclusion_definitions += get_related_inclusion_definitions(
+                serializer,
+                name,
+                field,
+                data_path,
+                inclusion_path,
+                references=references,
+            )
 
     return inclusion_definitions
+
+
+def merge_inclusion_definitions(
+    definitions: List[InclusionDefinition],
+) -> List[InclusionDefinition]:
+    """
+    Merge inclusion definitions based on field/serializer.
+
+    Merging definitions allows you to stay efficient in collecting the PK
+    values to populate the data, while still allowing a simpler setup to figure
+    out all the definitions for different data paths with the same inclusion.
+
+    A merge is performed when definitions share the same field and
+    ``serializer_class``, but have different ``data_path``s (and the
+    ``inclusion_path`` is ``None``).
+    """
+    merged = []
+
+    # keep a copy around to process the definitions. Anything that gets merged,
+    # is removed from this, so we can just loop over the original definitions
+    # without mutating the objects we're looping over (because that gets funky
+    # and weird to debug).
+    inputs = copy.copy(definitions)
+
+    for definition in definitions:
+        # skip if it was already processed
+        if definition not in inputs:
+            continue
+
+        # find matching definitions
+        matching_defs = [
+            _definition
+            for _definition in inputs
+            if _definition.is_mergeable_with(definition)
+            and _definition is not definition  # noqa
+        ]
+
+        data_paths = sum(
+            (match.data_paths for match in matching_defs), definition.data_paths
+        )
+
+        # clean up our inputs
+        inputs.remove(definition)
+        for _definition in matching_defs:
+            inputs.remove(_definition)
+
+        # make the new definition, if not merge data is found, the original
+        # definition is re-used
+        merged.append(
+            InclusionDefinition(
+                field=definition.field,
+                serializer_class=definition.serializer_class,
+                data_path=data_paths,
+                inclusion_path=definition.inclusion_path,
+            )
+        )
+
+    return merged
+
+
+def get_data_path(data_path_start, name):
+    return name if data_path_start is None else f"{data_path_start}.{name}"
+
+
+def get_inclusion_path(inclusion_path_start, name):
+    if not inclusion_path_start:
+        return None
+    if ":" not in inclusion_path_start:
+        return f"{inclusion_path_start}:{name}"
+    else:
+        return f"{inclusion_path_start}.{name}"
+
+
+def get_related_inclusion_definitions(
+    serializer, name, field, data_path, inclusion_path, references: dict = None
+):
+    references = references or {}
+    # we are now sure we're dealing with a relational field that is not a
+    # nested serializer. Inspect the inclusion definitions
+    inclusion_serializer_class = get_inclusion_serializer_class(serializer, name)
+
+    # very much possible that a FK is set up without inclusions
+    if inclusion_serializer_class is None:
+        return []
+
+    referrer = (type(serializer), name)
+    if inclusion_serializer_class not in references:
+        references[inclusion_serializer_class] = [referrer]
+    elif referrer not in references[inclusion_serializer_class]:
+        references[inclusion_serializer_class].append(referrer)
+    else:
+        # referrer is already recorded before - we're detecting a circular reference
+        return []
+
+    # set up the definition - this is static and no data touches this
+    definition = InclusionDefinition(
+        field=field,
+        serializer_class=inclusion_serializer_class,
+        data_path=data_path,
+        inclusion_path=inclusion_path,
+    )
+
+    # check if this serializer has its own inclusions
+    return [definition] + determine_inclusion_definitions(
+        inclusion_serializer_class(),
+        data_path_start=data_path,
+        inclusion_path_start=definition.model_key,
+        references=references,
+    )
+
+
+def get_nested_inclusion_definitions(field, data_path, inclusion_path):
+    return determine_inclusion_definitions(
+        field, data_path_start=data_path, inclusion_path_start=inclusion_path
+    )
 
 
 def get_pks(serializer_data: Union[list, dict, None], data_path: str) -> list:
@@ -383,24 +494,36 @@ def extract_inclusions(
         to_include = _fields
         nested = {field: ["*"] for field in _fields}
 
+    requested_roots = set(
+        [include for include in to_include if "." not in include]
+    ).union(set(nested))
+
     # first sweep - create the initial inclusions that can be resolved now,
     # because it does not depend on inclusions being resolved
     for definition in inclusion_definitions:
-        root = definition.data_path.split(".")[0]
-        if (
-            root not in to_include
-            and root not in nested
-            and not definition.inclusion_path
-        ):
+        relevant_roots = set(definition.roots).intersection(requested_roots)
+
+        # this inclusion does not provide any requested roots, and it's also
+        # not required for nested inclusions -> skip it alltogether
+        if not relevant_roots and not definition.inclusion_path:
             continue
 
         inclusion = Inclusion(definition=definition)
         inclusions.append(inclusion)
 
+        # inclusion path implies it needs to be resolved later after the first
+        # sweep is completed
         if definition.inclusion_path:
             continue
 
-        pks = get_pks(serializer_data, definition.data_path)
+        # collect the pks for the requested inclusions
+        pks = []
+        for root, data_path in zip(definition.roots, definition.data_paths):
+            # this root path is not requested at all, so skip it
+            if root not in relevant_roots:
+                continue
+            pks += get_pks(serializer_data, data_path)
+
         inclusion.resolve(pks)
 
     # merge them together
@@ -427,8 +550,10 @@ def extract_inclusions(
                 # it's possible this originates in a path from the root down
                 # to something that isn't even needed to be included. in that case,
                 # resolve on the empty dataset
-                root = inclusion.definition.data_path.split(".")[0]
-                if root not in to_include and root not in nested:
+                relevant_roots = set(inclusion.definition.roots).intersection(
+                    requested_roots
+                )
+                if not relevant_roots:
                     inclusion.resolve([])
                 continue
 
