@@ -180,7 +180,7 @@ class InclusionJSONRenderer(renderers.JSONRenderer):
 
         # if it's a custom action, and the serializer has no inclusions, return the normal response
         view = renderer_context.get("view")
-        if view is not None:
+        if view is not None and hasattr(view, "action"):
             if not view.action:
                 logger.debug("Skipping inclusions for view that has no action")
                 return super().render(data, accepted_media_type, renderer_context)
