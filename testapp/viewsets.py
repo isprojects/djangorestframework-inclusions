@@ -4,8 +4,24 @@ from rest_framework.response import Response
 
 from rest_framework_inclusions.renderer import InclusionJSONRenderer
 
-from .models import C, Child, ChildProps, Container, E, Entry, MainObject, Parent, Tag
+from .models import (
+    Basic,
+    BasicM2M,
+    C,
+    Child,
+    ChildProps,
+    Container,
+    E,
+    Entry,
+    MainObject,
+    Parent,
+    Tag,
+    ModelWithProperty,
+    ModelWithOptionalSub,
+)
 from .serializers import (
+    BasicSerializer,
+    BasicM2MSerializer,
     ChildPropsSerializer2,
     ChildSerializer,
     ChildSerializer2,
@@ -18,6 +34,8 @@ from .serializers import (
     MainObjectSerializer,
     ParentSerializer,
     TagSerializer,
+    ModelWithPropertySerializer,
+    ModelWithOptionalSubSerializer,
 )
 
 
@@ -26,6 +44,23 @@ class CommonMixin:
     authentication_classes = ()
     renderer_classes = (InclusionJSONRenderer,)
     serializer_class = TagSerializer
+
+
+class BasicViewSet(CommonMixin, viewsets.ModelViewSet):
+    serializer_class = BasicSerializer
+    queryset = Basic.objects.all()
+
+    @action(detail=False)
+    def many(self, request, *args, **kwargs):
+        serializer = BasicSerializer(
+            instance=Basic.objects.all().order_by("id"), many=True
+        )
+        return Response(serializer.data)
+
+
+class BasicM2MViewSet(CommonMixin, viewsets.ModelViewSet):
+    serializer_class = BasicM2MSerializer
+    queryset = BasicM2M.objects.all()
 
 
 class TagViewSet(CommonMixin, viewsets.ModelViewSet):
@@ -106,3 +141,13 @@ class MainObjectViewSet(CommonMixin, viewsets.ModelViewSet):
 class EViewSet(CommonMixin, viewsets.ModelViewSet):
     serializer_class = ESerializer
     queryset = E.objects.all()
+
+
+class ModelWithPropertyViewSet(CommonMixin, viewsets.ModelViewSet):
+    serializer_class = ModelWithPropertySerializer
+    queryset = ModelWithProperty.objects.all()
+
+
+class ModelWithOptionalSubViewSet(CommonMixin, viewsets.ModelViewSet):
+    serializer_class = ModelWithOptionalSubSerializer
+    queryset = ModelWithOptionalSub.objects.all()

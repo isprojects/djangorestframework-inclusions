@@ -1,6 +1,22 @@
 from django.db import models
 
 
+class Company(models.Model):
+    name = models.CharField(max_length=50)
+
+
+class Basic(models.Model):
+    name = models.CharField(max_length=50)
+    company = models.ForeignKey(
+        Company, null=True, on_delete=models.PROTECT, related_name="+"
+    )
+
+
+class BasicM2M(models.Model):
+    name = models.CharField(max_length=50)
+    tags = models.ManyToManyField("Tag")
+
+
 class Tag(models.Model):
     name = models.CharField(max_length=50)
 
@@ -107,3 +123,28 @@ class SecondLevelRelatedObject(models.Model):
     related_object = models.ForeignKey(
         RelatedObject, null=True, on_delete=models.CASCADE
     )
+
+
+# a model with a property that's exposed directly
+
+
+class ModelWithProperty(models.Model):
+    def basics(self):
+        return Basic.objects.all().order_by("id")
+
+    def basics_list(self):
+        return list(Basic.objects.all().order_by("id"))
+
+
+class SubSub(models.Model):
+    name = models.CharField(max_length=50)
+
+
+class Sub(models.Model):
+    name = models.CharField(max_length=50)
+    company = models.ForeignKey(Company, null=True, on_delete=models.CASCADE)
+    sub_sub = models.OneToOneField(SubSub, on_delete=models.CASCADE, null=True)
+
+
+class ModelWithOptionalSub(models.Model):
+    sub = models.OneToOneField(Sub, on_delete=models.CASCADE, null=True)

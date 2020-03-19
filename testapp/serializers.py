@@ -1,6 +1,9 @@
 from rest_framework import serializers
 
 from .models import (
+    Basic,
+    BasicM2M,
+    Company,
     A,
     B,
     C,
@@ -15,6 +18,10 @@ from .models import (
     RelatedObject,
     SecondLevelRelatedObject,
     Tag,
+    ModelWithProperty,
+    Sub,
+    SubSub,
+    ModelWithOptionalSub,
 )
 
 
@@ -22,6 +29,28 @@ class TagSerializer(serializers.ModelSerializer):
     class Meta:
         model = Tag
         fields = "__all__"
+
+
+class CompanySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Company
+        fields = ["id", "name"]
+
+
+class BasicSerializer(serializers.ModelSerializer):
+    inclusion_serializers = {"company": CompanySerializer}
+
+    class Meta:
+        model = Basic
+        fields = ["name", "company"]
+
+
+class BasicM2MSerializer(serializers.ModelSerializer):
+    inclusion_serializers = {"tags": TagSerializer}
+
+    class Meta:
+        model = BasicM2M
+        fields = ["name", "tags"]
 
 
 class ParentSerializer(serializers.ModelSerializer):
@@ -180,3 +209,40 @@ class ESerializer(serializers.ModelSerializer):
     class Meta:
         model = E
         fields = ("id", "d")
+
+
+class ModelWithPropertySerializer(serializers.ModelSerializer):
+    inclusion_serializers = {"companies": CompanySerializer}
+
+    basics = BasicSerializer(many=True, read_only=True)
+
+    basics_list = BasicSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = ModelWithProperty
+        fields = ("basics", "basics_list")
+
+
+class SubSubSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SubSub
+        fields = ("name",)
+
+
+class SubSerializer(serializers.ModelSerializer):
+    inclusion_serializers = {"company": CompanySerializer}
+
+    sub_sub = SubSubSerializer(read_only=True)
+
+    class Meta:
+        model = Sub
+        fields = ("name", "company", "sub_sub")
+
+
+class ModelWithOptionalSubSerializer(serializers.ModelSerializer):
+    sub = SubSerializer(default=None)
+
+    class Meta:
+        model = ModelWithOptionalSub
+        fields = ("sub",)
+

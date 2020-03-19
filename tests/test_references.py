@@ -155,6 +155,20 @@ class ReferenceTests(InclusionsMixin, APITestCase):
         }
         self.assertResponseData("parent-detail", expected, pk=self.parent2.pk)
 
+    def test_parent_detail_with_include(self):
+        expected = {
+            "data": {
+                "id": self.parent2.id,
+                "name": "Papa Roach",
+                "tags": [self.tag2.id],
+                "favourite_child": None,
+            },
+            "inclusions": {"testapp.Tag": [{"id": self.tag2.id, "name": "are"}]},
+        }
+        self.assertResponseData(
+            "parent-detail", expected, pk=self.parent2.pk, params={"include": "*"}
+        )
+
     def test_nested_include(self):
         expected = {
             "data": {
@@ -203,7 +217,7 @@ class ReferenceTests(InclusionsMixin, APITestCase):
                     {"id": self.tag2.id, "name": "are"},
                 ],
                 "testapp.ChildProps": [
-                    {"id": self.childprops.id, "child": self.child2.pk,}
+                    {"id": self.childprops.id, "child": self.child2.pk}
                 ],
             },
         }
@@ -249,7 +263,7 @@ class ReferenceTests(InclusionsMixin, APITestCase):
                     {"id": self.tag3.id, "name": "it"},
                 ],
                 "testapp.ChildProps": [
-                    {"id": self.childprops.id, "child": self.child2.pk,}
+                    {"id": self.childprops.id, "child": self.child2.pk}
                 ],
             },
         }
@@ -271,7 +285,7 @@ class ReferenceTests(InclusionsMixin, APITestCase):
             },
             "inclusions": {
                 "testapp.ChildProps": [
-                    {"id": self.childprops.id, "child": self.child2.id,}
+                    {"id": self.childprops.id, "child": self.child2.id}
                 ]
             },
         }
@@ -490,6 +504,6 @@ class ReferenceTests(InclusionsMixin, APITestCase):
 
         expected = {
             "data": [{"id": main_object.id, "relatedobject_set": []}],
-            "inclusions": {"testapp.A": []},
+            "inclusions": {},
         }
         self.assertResponseData("mainobject-list", expected, params={"include": "*"})

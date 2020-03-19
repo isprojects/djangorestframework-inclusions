@@ -3,6 +3,8 @@ from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
 from .viewsets import (
+    BasicViewSet,
+    BasicM2MViewSet,
     CDirectNestedInclusionViewSet,
     ChildPropsViewSet,
     ChildViewSet,
@@ -15,6 +17,8 @@ from .viewsets import (
     MainObjectViewSet,
     ParentViewSet,
     TagViewSet,
+    ModelWithPropertyViewSet,
+    ModelWithOptionalSubViewSet,
 )
 
 router = DefaultRouter()
@@ -31,5 +35,9 @@ router.register(r"proto/c-nested", CDirectNestedInclusionViewSet, basename="c-ne
 router.register(r"proto/mainobjects", MainObjectViewSet)
 router.register(r"proto/e", EViewSet)
 
+router.register(r"proto/basic", BasicViewSet)
+router.register(r"proto/basicm2m", BasicM2MViewSet)
+router.register(r"proto/modelwithproperty", ModelWithPropertyViewSet)
+router.register(r"proto/modelwithoptionalsub", ModelWithOptionalSubViewSet)
 
 urlpatterns = [path("api/", include(router.urls))]
