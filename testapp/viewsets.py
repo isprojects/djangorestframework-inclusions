@@ -14,14 +14,14 @@ from .models import (
     E,
     Entry,
     MainObject,
+    ModelWithOptionalSub,
+    ModelWithProperty,
     Parent,
     Tag,
-    ModelWithProperty,
-    ModelWithOptionalSub,
 )
 from .serializers import (
-    BasicSerializer,
     BasicM2MSerializer,
+    BasicSerializer,
     ChildPropsSerializer2,
     ChildSerializer,
     ChildSerializer2,
@@ -32,10 +32,10 @@ from .serializers import (
     EntryReadOnlyTagsSerializer,
     ESerializer,
     MainObjectSerializer,
+    ModelWithOptionalSubSerializer,
+    ModelWithPropertySerializer,
     ParentSerializer,
     TagSerializer,
-    ModelWithPropertySerializer,
-    ModelWithOptionalSubSerializer,
 )
 
 

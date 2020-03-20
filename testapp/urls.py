@@ -3,8 +3,8 @@ from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
 from .viewsets import (
-    BasicViewSet,
     BasicM2MViewSet,
+    BasicViewSet,
     CDirectNestedInclusionViewSet,
     ChildPropsViewSet,
     ChildViewSet,
@@ -15,10 +15,10 @@ from .viewsets import (
     EntryViewSet,
     EViewSet,
     MainObjectViewSet,
+    ModelWithOptionalSubViewSet,
+    ModelWithPropertyViewSet,
     ParentViewSet,
     TagViewSet,
-    ModelWithPropertyViewSet,
-    ModelWithOptionalSubViewSet,
 )
 
 router = DefaultRouter()

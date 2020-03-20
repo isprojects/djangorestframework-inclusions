@@ -1,27 +1,27 @@
 from rest_framework import serializers
 
 from .models import (
-    Basic,
-    BasicM2M,
-    Company,
     A,
     B,
+    Basic,
+    BasicM2M,
     C,
     Child,
     ChildProps,
+    Company,
     Container,
     D,
     E,
     Entry,
     MainObject,
+    ModelWithOptionalSub,
+    ModelWithProperty,
     Parent,
     RelatedObject,
     SecondLevelRelatedObject,
-    Tag,
-    ModelWithProperty,
     Sub,
     SubSub,
-    ModelWithOptionalSub,
+    Tag,
 )
 
 
@@ -245,4 +245,3 @@ class ModelWithOptionalSubSerializer(serializers.ModelSerializer):
     class Meta:
         model = ModelWithOptionalSub
         fields = ("sub",)
-

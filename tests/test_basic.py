@@ -6,11 +6,12 @@ from testapp.models import (
     Basic,
     BasicM2M,
     Company,
-    Tag,
+    ModelWithOptionalSub,
     ModelWithProperty,
     Sub,
-    ModelWithOptionalSub,
+    Tag,
 )
+
 from rest_framework_inclusions.core import InclusionLoader
 
 

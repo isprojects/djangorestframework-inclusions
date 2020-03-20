@@ -1,12 +1,13 @@
 from django.db.models import Manager
 from django.utils.module_loading import import_string
+
+from rest_framework.fields import SkipField
 from rest_framework.relations import (
     ManyRelatedField,
     PKOnlyObject,
     PrimaryKeyRelatedField,
     RelatedField,
 )
-from rest_framework.fields import SkipField
 from rest_framework.serializers import BaseSerializer, ListSerializer
 
 
