@@ -1,4 +1,4 @@
-1.1.0 (unreleased)
+1.1.0 (2020-03-26)
 ------------------
 
 The old approach would generate a new database query for each inclusion made.
