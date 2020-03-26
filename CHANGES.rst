@@ -1,6 +1,5 @@
-# 1.1.0
-
-Rewrite of the internals.
+1.1.0 (unreleased)
+------------------
 
 The old approach would generate a new database query for each inclusion made.
 This meant that Django mechanisms such as select_related and prefetch_related
