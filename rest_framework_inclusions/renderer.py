@@ -2,7 +2,8 @@ import logging
 from collections import OrderedDict
 from typing import Callable
 
-from rest_framework import renderers, serializers
+from drf_ujson import renderers
+from rest_framework import serializers
 from rest_framework.utils.serializer_helpers import ReturnDict
 
 from .core import InclusionLoader
@@ -10,7 +11,7 @@ from .core import InclusionLoader
 logger = logging.getLogger(__name__)
 
 
-class InclusionJSONRenderer(renderers.JSONRenderer):
+class InclusionJSONRenderer(renderers.UJSONRenderer):
     def _render_inclusions(self, data, renderer_context):
         renderer_context = renderer_context or {}
         response = renderer_context.get("response")
