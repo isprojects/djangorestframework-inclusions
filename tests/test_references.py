@@ -1,6 +1,7 @@
 from django.urls import reverse
 
 from rest_framework.test import APITestCase
+
 from testapp.models import (
     A,
     B,

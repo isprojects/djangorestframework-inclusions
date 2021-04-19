@@ -2,6 +2,8 @@ from django.urls import reverse
 
 import pytest
 from rest_framework import serializers
+
+from rest_framework_inclusions.core import InclusionLoader
 from testapp.models import (
     Basic,
     BasicM2M,
@@ -11,8 +13,6 @@ from testapp.models import (
     Sub,
     Tag,
 )
-
-from rest_framework_inclusions.core import InclusionLoader
 
 
 @pytest.mark.django_db
