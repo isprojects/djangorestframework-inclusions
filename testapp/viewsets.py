@@ -2,6 +2,8 @@ from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
+from django.utils.translation import gettext_lazy as _
+
 from rest_framework_inclusions.renderer import InclusionJSONRenderer
 
 from .models import (
@@ -56,6 +58,10 @@ class BasicViewSet(CommonMixin, viewsets.ModelViewSet):
             instance=Basic.objects.all().order_by("id"), many=True
         )
         return Response(serializer.data)
+
+    @action(detail=False)
+    def translation(self,request, *args, **kwargs):
+        return Response({"parent":[{"message":_("mother")}]})
 
 
 class BasicM2MViewSet(CommonMixin, viewsets.ModelViewSet):

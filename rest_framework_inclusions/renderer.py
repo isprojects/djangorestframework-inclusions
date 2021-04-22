@@ -2,15 +2,25 @@ import logging
 from collections import OrderedDict
 from typing import Callable
 
-from rest_framework import renderers, serializers
+from drf_orjson_renderer import renderers
+from rest_framework import serializers
 from rest_framework.utils.serializer_helpers import ReturnDict
+
+from django.utils.functional import Promise
 
 from .core import InclusionLoader
 
 logger = logging.getLogger(__name__)
 
 
-class InclusionJSONRenderer(renderers.JSONRenderer):
+class InclusionJSONRenderer(renderers.ORJSONRenderer):
+
+    @staticmethod
+    def default(obj):
+        if isinstance(obj, Promise):
+            obj = obj._proxy____cast()
+        return renderers.ORJSONRenderer.default(obj)
+
     def _render_inclusions(self, data, renderer_context):
         renderer_context = renderer_context or {}
         response = renderer_context.get("response")
@@ -62,6 +72,7 @@ class InclusionJSONRenderer(renderers.JSONRenderer):
                 render_data[key] = value
 
         return render_data
+
 
     def render(self, data, accepted_media_type=None, renderer_context=None):
         render_data = self._render_inclusions(data, renderer_context)

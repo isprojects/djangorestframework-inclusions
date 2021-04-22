@@ -14,6 +14,7 @@ from testapp.models import (
 
 from rest_framework_inclusions.core import InclusionLoader
 
+from django.utils.translation import gettext_lazy as _
 
 @pytest.mark.django_db
 def test_basic(client):
@@ -153,3 +154,10 @@ def test_basic_many(client):
         ],
         "inclusions": {"testapp.Company": [{"id": company.id, "name": "SKYNET"}]},
     }
+    
+@pytest.mark.django_db
+def test_basic_translation(client):
+    # a detail=False route that gives back a many=True serializer
+    url = reverse("basic-translation")
+    response = client.get(url, data={"include": "*"})
+    assert response.json() == {"parent":[{"message":_("mother")}]}
