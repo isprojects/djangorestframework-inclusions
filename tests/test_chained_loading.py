@@ -1,6 +1,7 @@
 import unittest
 
 from rest_framework.test import APITestCase
+
 from testapp.models import A, B, C, Child, D, E, Parent, Tag
 
 from .mixins import InclusionsMixin
