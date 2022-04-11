@@ -11,6 +11,8 @@ logger = logging.getLogger(__name__)
 
 
 class InclusionJSONRenderer(renderers.JSONRenderer):
+    loader_class = InclusionLoader
+
     def _render_inclusions(self, data, renderer_context):
         renderer_context = renderer_context or {}
         response = renderer_context.get("response")
@@ -45,14 +47,11 @@ class InclusionJSONRenderer(renderers.JSONRenderer):
 
         request = renderer_context.get("request")
 
-        inclusions = InclusionLoader(get_allowed_paths(request)).inclusions_dict(
+        inclusions = self.loader_class(get_allowed_paths(request)).inclusions_dict(
             serializer
         )
 
         render_data = OrderedDict()
-        # map the meta information, if any
-        render_data["data"] = serializer_data
-        render_data["inclusions"] = inclusions
 
         # extract keys like pagination information
         if isinstance(data, dict) and not isinstance(data, ReturnDict):
@@ -60,6 +59,10 @@ class InclusionJSONRenderer(renderers.JSONRenderer):
                 if key == "results":
                     continue
                 render_data[key] = value
+
+        # map the meta information, if any
+        render_data["data"] = serializer_data
+        render_data["inclusions"] = inclusions
 
         return render_data
 
