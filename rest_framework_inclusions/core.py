@@ -21,11 +21,14 @@ class InclusionLoader:
         self.allowed_paths = allowed_paths
         self._seen = set()
 
+    def get_model_key(self, obj, *args, **kwargs):
+        return obj.__class__._meta.label
+
     def inclusions_dict(self, serializer):
         entries = self._inclusions((), serializer, serializer.instance)
         result = {}
         for obj, inclusion_serializer in entries:
-            model_key = obj.__class__._meta.label
+            model_key = self.get_model_key(obj, inclusion_serializer)
             data = inclusion_serializer(
                 instance=obj, context={"request": serializer.context.get("request")}
             ).data
