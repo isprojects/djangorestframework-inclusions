@@ -17,6 +17,8 @@ class Error(Exception):
 
 
 class InclusionLoader:
+    nested_inclusions_use_parent = True
+
     def __init__(self, allowed_paths):
         self.allowed_paths = allowed_paths
         self._seen = set()
@@ -81,8 +83,9 @@ class InclusionLoader:
             yield obj, inclusion_serializer
             # when we do inclusions in inclusions, we base path off our
             # parent object path, not the sub-field
+            nested_path = new_path[:-1] if self.nested_inclusions_use_parent else new_path
             for entry in self._instance_inclusions(
-                new_path[:-1], inclusion_serializer(instance=object), obj
+                nested_path, inclusion_serializer(instance=object), obj
             ):
                 yield entry
 
