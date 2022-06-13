@@ -12,6 +12,8 @@ logger = logging.getLogger(__name__)
 
 class InclusionJSONRenderer(renderers.JSONRenderer):
     loader_class = InclusionLoader
+    response_data_key = "data"
+    response_inclusions_key = "inclusions"
 
     def _render_inclusions(self, data, renderer_context):
         renderer_context = renderer_context or {}
@@ -61,8 +63,8 @@ class InclusionJSONRenderer(renderers.JSONRenderer):
                 render_data[key] = value
 
         # map the meta information, if any
-        render_data["data"] = serializer_data
-        render_data["inclusions"] = inclusions
+        render_data[self.response_data_key] = serializer_data
+        render_data[self.response_inclusions_key] = inclusions
 
         return render_data
 
