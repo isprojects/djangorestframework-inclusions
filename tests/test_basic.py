@@ -153,3 +153,20 @@ def test_basic_many(client):
         ],
         "inclusions": {"testapp.Company": [{"id": company.id, "name": "SKYNET"}]},
     }
+
+
+@pytest.mark.django_db
+def test_basic_custom_response_keys(client):
+    company = Company.objects.create(name="SKYNET")
+    basic = Basic.objects.create(name="You're basic", company=company)
+
+    url = reverse("custom-basic-detail", kwargs={"pk": basic.id})
+
+    response = client.get(url, data={"include": "*"})
+
+    assert response.json() == {
+        "custom_data": {"company": company.id, "name": "You're basic"},
+        "custom_inclusions": {
+            "prefix:testapp.Company": [{"id": company.id, "name": "SKYNET"}]
+        },
+    }

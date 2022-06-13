@@ -198,6 +198,44 @@ class ReferenceTests(InclusionsMixin, APITestCase):
             pk=self.child2.pk,
         )
 
+    def test_nested_include_hyperlinked(self):
+        expected = {
+            "data": {
+                "url": f"http://testserver{reverse('child-hyperlinked-detail', kwargs={'pk': self.child2.pk})}",
+                "parent": {
+                    "url": f"http://testserver{reverse('parent-hyperlinked-detail', kwargs={'pk': self.parent1.pk})}",
+                    "name": "Papa Johns",
+                    "tags": [
+                        f"http://testserver{reverse('tag-hyperlinked-detail', kwargs={'pk': self.tag1.pk})}",
+                        f"http://testserver{reverse('tag-hyperlinked-detail', kwargs={'pk': self.tag2.pk})}",
+                    ],
+                    "favourite_child": f"http://testserver{reverse('child-hyperlinked-detail', kwargs={'pk': self.child2.pk})}",
+                },
+                "name": "Children of Men",
+                "childprops": f"http://testserver{reverse('childprops-hyperlinked-detail', kwargs={'pk': self.childprops.pk})}",
+                "tags": [],
+            },
+            "inclusions": {
+                "testapp.Tag": [
+                    {
+                        "url": f"http://testserver{reverse('tag-hyperlinked-detail', kwargs={'pk': self.tag1.pk})}",
+                        "name": "you",
+                    },
+                    {
+                        "url": f"http://testserver{reverse('tag-hyperlinked-detail', kwargs={'pk': self.tag2.pk})}",
+                        "name": "are",
+                    },
+                ]
+            },
+        }
+
+        self.assertResponseData(
+            "child-hyperlinked-detail",
+            expected,
+            params={"include": "parent.tags"},
+            pk=self.child2.pk,
+        )
+
     def test_include_all_detail(self):
         expected = {
             "data": {
@@ -360,6 +398,43 @@ class ReferenceTests(InclusionsMixin, APITestCase):
 
         self.assertResponseData(
             "childprops-detail",
+            expected,
+            params={"include": "child.tags,child.parent"},
+            pk=self.childprops.pk,
+        )
+
+    def test_nested_custom_loader_use_complete_path(self):
+        self.child2.tags.set([self.tag1])
+        self.addCleanup(self.child2.tags.clear)
+
+        # Tag from Parent should not be included, since `nested_inclusions_use_complete_path`
+        # is set to `True` on the custom loader class
+        expected = {
+            "custom_data": {
+                "id": self.childprops.id,
+                "child": {
+                    "id": self.child2.id,
+                    "parent": self.parent1.id,
+                    "tags": [self.tag1.id],
+                },
+            },
+            "custom_inclusions": {
+                "prefix:testapp.Tag": [
+                    {"id": self.tag1.id, "name": "you"},
+                ],
+                "prefix:testapp.Parent": [
+                    {
+                        "id": self.parent1.id,
+                        "name": "Papa Johns",
+                        "tags": [self.tag1.id, self.tag2.id],
+                        "favourite_child": self.child2.id,
+                    }
+                ],
+            },
+        }
+
+        self.assertResponseData(
+            "custom-childprops-detail",
             expected,
             params={"include": "child.tags,child.parent"},
             pk=self.childprops.pk,
