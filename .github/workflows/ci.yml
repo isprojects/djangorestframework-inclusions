@@ -1,0 +1,36 @@
+name: Run CI
+
+on:
+  push:
+    branches:
+      - master
+    tags:
+      - '*'
+  pull_request:
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.8", "3.9", "3.10"]
+        DJANGO: ["3.2"]
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v3
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install dependencies
+      run: |
+        pip install tox tox-gh-actions
+    - name: Run test matrix
+      run: |
+        tox
+    - name: Coverage
+      run: |
+        pip install codecov
+        codecov -e TOXENV,DJANGO
