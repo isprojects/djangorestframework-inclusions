@@ -11,6 +11,10 @@ logger = logging.getLogger(__name__)
 
 
 class InclusionJSONRenderer(renderers.JSONRenderer):
+    loader_class = InclusionLoader
+    response_data_key = "data"
+    response_inclusions_key = "inclusions"
+
     def _render_inclusions(self, data, renderer_context):
         renderer_context = renderer_context or {}
         response = renderer_context.get("response")
@@ -45,14 +49,11 @@ class InclusionJSONRenderer(renderers.JSONRenderer):
 
         request = renderer_context.get("request")
 
-        inclusions = InclusionLoader(get_allowed_paths(request)).inclusions_dict(
-            serializer
-        )
+        inclusions = self.loader_class(
+            get_allowed_paths(request, view=view)
+        ).inclusions_dict(serializer)
 
         render_data = OrderedDict()
-        # map the meta information, if any
-        render_data["data"] = serializer_data
-        render_data["inclusions"] = inclusions
 
         # extract keys like pagination information
         if isinstance(data, dict) and not isinstance(data, ReturnDict):
@@ -61,17 +62,30 @@ class InclusionJSONRenderer(renderers.JSONRenderer):
                     continue
                 render_data[key] = value
 
+        # map the meta information, if any
+        render_data[self.response_data_key] = serializer_data
+        render_data[self.response_inclusions_key] = inclusions
+
         return render_data
 
     def render(self, data, accepted_media_type=None, renderer_context=None):
         render_data = self._render_inclusions(data, renderer_context)
-        if not render_data:
+        allowed_check = getattr(
+            renderer_context["view"], "include_allowed", lambda: True
+        )
+        skip_includes = not allowed_check()
+
+        if not render_data or skip_includes:
             return super().render(data, accepted_media_type, renderer_context)
         return super().render(render_data, accepted_media_type, renderer_context)
 
 
-def get_allowed_paths(request):
-    include = request.GET.get("include") if request else None
+def get_allowed_paths(request, view=None):
+    if getattr(view, "get_requested_inclusions", None):
+        include = view.get_requested_inclusions(request)
+    else:
+        include = request.GET.get("include") if request else None
+
     if include is None:
         # nothing is allowed
         return set()

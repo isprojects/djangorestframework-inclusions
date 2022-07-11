@@ -31,6 +31,15 @@ class TagSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
+class HyperlinkedTagSerializer(serializers.HyperlinkedModelSerializer):
+    class Meta:
+        model = Tag
+        fields = ["url", "name"]
+        extra_kwargs = {
+            "url": {"lookup_field": "pk", "view_name": "tag-hyperlinked-detail"},
+        }
+
+
 class CompanySerializer(serializers.ModelSerializer):
     class Meta:
         model = Company
@@ -68,6 +77,28 @@ class ParentSerializer(serializers.ModelSerializer):
         return super().create(validated_data)
 
 
+class HyperlinkedParentSerializer(serializers.HyperlinkedModelSerializer):
+    inclusion_serializers = {"tags": HyperlinkedTagSerializer}
+
+    class Meta:
+        model = Parent
+        fields = ["url", "name", "tags", "favourite_child"]
+        extra_kwargs = {
+            "url": {"lookup_field": "pk", "view_name": "parent-hyperlinked-detail"},
+            "favourite_child": {
+                "lookup_field": "pk",
+                "view_name": "child-hyperlinked-detail",
+            },
+            "tags": {"lookup_field": "pk", "view_name": "tag-hyperlinked-detail"},
+        }
+
+    def create(self, validated_data):
+        if validated_data.get("name") == "Trigger":
+            raise serializers.ValidationError({"invalid": "WRONG"})
+
+        return super().create(validated_data)
+
+
 class ParentSerializer2(serializers.ModelSerializer):
     inclusion_serializers = {"favourite_child": "testapp.serializers.ChildSerializer3"}
 
@@ -82,6 +113,16 @@ class ChildPropsSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
+class HyperlinkedChildPropsSerializer(serializers.HyperlinkedModelSerializer):
+    class Meta:
+        model = ChildProps
+        fields = ["url", "child"]
+        extra_kwargs = {
+            "url": {"lookup_field": "pk", "view_name": "childprops-hyperlinked-detail"},
+            "child": {"lookup_field": "pk", "view_name": "child-hyperlinked-detail"},
+        }
+
+
 class ChildSerializer(serializers.ModelSerializer):
     parent = ParentSerializer()
 
@@ -90,6 +131,27 @@ class ChildSerializer(serializers.ModelSerializer):
     class Meta:
         model = Child
         fields = ("id", "parent", "name", "childprops", "tags")
+
+
+class HyperlinkedChildSerializer(serializers.HyperlinkedModelSerializer):
+    parent = HyperlinkedParentSerializer()
+
+    inclusion_serializers = {
+        "childprops": HyperlinkedChildPropsSerializer,
+        "tags": HyperlinkedTagSerializer,
+    }
+
+    class Meta:
+        model = Child
+        fields = ("url", "parent", "name", "childprops", "tags")
+        extra_kwargs = {
+            "url": {"lookup_field": "pk", "view_name": "child-hyperlinked-detail"},
+            "parent": {"lookup_field": "pk", "view_name": "parent-hyperlinked-detail"},
+            "childprops": {
+                "lookup_field": "pk",
+                "view_name": "childprops-hyperlinked-detail",
+            },
+        }
 
 
 class ChildSerializer2(serializers.ModelSerializer):

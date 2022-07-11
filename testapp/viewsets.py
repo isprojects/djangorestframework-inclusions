@@ -19,6 +19,7 @@ from .models import (
     Parent,
     Tag,
 )
+from .renderers import CustomInclusionJSONRenderer
 from .serializers import (
     BasicM2MSerializer,
     BasicSerializer,
@@ -31,6 +32,10 @@ from .serializers import (
     CSerializer,
     EntryReadOnlyTagsSerializer,
     ESerializer,
+    HyperlinkedChildPropsSerializer,
+    HyperlinkedChildSerializer,
+    HyperlinkedParentSerializer,
+    HyperlinkedTagSerializer,
     MainObjectSerializer,
     ModelWithOptionalSubSerializer,
     ModelWithPropertySerializer,
@@ -58,6 +63,10 @@ class BasicViewSet(CommonMixin, viewsets.ModelViewSet):
         return Response(serializer.data)
 
 
+class CustomRendererBasicViewSet(BasicViewSet):
+    renderer_classes = (CustomInclusionJSONRenderer,)
+
+
 class BasicM2MViewSet(CommonMixin, viewsets.ModelViewSet):
     serializer_class = BasicM2MSerializer
     queryset = BasicM2M.objects.all()
@@ -70,6 +79,16 @@ class TagViewSet(CommonMixin, viewsets.ModelViewSet):
     @action(detail=False)
     def custom_action(self, request):
         serializer = TagSerializer(self.get_queryset(), many=True)
+        return Response(serializer.data)
+
+
+class HyperlinkedTagViewSet(CommonMixin, viewsets.ModelViewSet):
+    queryset = Tag.objects.all()
+    pagination_class = None
+
+    @action(detail=False)
+    def custom_action(self, request):
+        serializer = HyperlinkedTagSerializer(self.get_queryset(), many=True)
         return Response(serializer.data)
 
 
@@ -86,9 +105,17 @@ class ParentViewSet(CommonMixin, viewsets.ModelViewSet):
         return Response({"arbitrary": "content"})
 
 
+class HyperlinkedParentViewSet(ParentViewSet):
+    serializer_class = HyperlinkedParentSerializer
+
+
 class ChildViewSet(CommonMixin, viewsets.ModelViewSet):
     serializer_class = ChildSerializer
     queryset = Child.objects.all()
+
+
+class HyperlinkedChildViewSet(ChildViewSet):
+    serializer_class = HyperlinkedChildSerializer
 
 
 class ChildViewSet2(CommonMixin, viewsets.ModelViewSet):
@@ -104,6 +131,14 @@ class ChildViewSet3(CommonMixin, viewsets.ModelViewSet):
 class ChildPropsViewSet(CommonMixin, viewsets.ModelViewSet):
     serializer_class = ChildPropsSerializer2
     queryset = ChildProps.objects.all()
+
+
+class HyperlinkedChildPropsViewSet(ChildPropsViewSet):
+    serializer_class = HyperlinkedChildPropsSerializer
+
+
+class CustomRendererChildPropsViewSet(ChildPropsViewSet):
+    renderer_classes = (CustomInclusionJSONRenderer,)
 
 
 class ContainerViewSet(CommonMixin, viewsets.ModelViewSet):

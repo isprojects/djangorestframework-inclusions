@@ -3,6 +3,7 @@ from django.utils.module_loading import import_string
 
 from rest_framework.fields import SkipField
 from rest_framework.relations import (
+    HyperlinkedRelatedField,
     ManyRelatedField,
     PKOnlyObject,
     PrimaryKeyRelatedField,
@@ -16,16 +17,23 @@ class Error(Exception):
 
 
 class InclusionLoader:
+    # When doing inclusions, this indicates whether or not the entire path should
+    # be used to include nested resources, e.g.: `?include=resource1.resource2` vs `?include=resource2`
+    nested_inclusions_use_complete_path = False
+
     def __init__(self, allowed_paths):
         self.allowed_paths = allowed_paths
         self._seen = set()
+
+    def get_model_key(self, obj, *args, **kwargs):
+        return obj._meta.label
 
     def inclusions_dict(self, serializer):
         entries = self._inclusions((), serializer, serializer.instance)
         result = {}
         for obj, inclusion_serializer in entries:
-            model_key = obj.__class__._meta.label
-            data = inclusion_serializer(instance=obj).data
+            model_key = self.get_model_key(obj, inclusion_serializer)
+            data = inclusion_serializer(instance=obj, context=serializer.context).data
             result.setdefault(model_key, []).append(data)
         # in-place sort of inclusions
         for value in result.values():
@@ -75,8 +83,11 @@ class InclusionLoader:
             yield obj, inclusion_serializer
             # when we do inclusions in inclusions, we base path off our
             # parent object path, not the sub-field
+            nested_path = (
+                new_path if self.nested_inclusions_use_complete_path else new_path[:-1]
+            )
             for entry in self._instance_inclusions(
-                new_path[:-1], inclusion_serializer(instance=object), obj
+                nested_path, inclusion_serializer(instance=object), obj
             ):
                 yield entry
 
@@ -102,6 +113,10 @@ class InclusionLoader:
         if self.allowed_paths is not None and path not in self.allowed_paths:
             return []
         if isinstance(field, PrimaryKeyRelatedField):
+            return self._primary_key_related_field_inclusions(
+                path, field, instance, inclusion_serializer
+            )
+        elif isinstance(field, HyperlinkedRelatedField):
             return self._primary_key_related_field_inclusions(
                 path, field, instance, inclusion_serializer
             )
@@ -161,6 +176,8 @@ def sort_key(item):
         return item["id"]
     elif "pk" in item:
         return item["pk"]
+    elif "url" in item:
+        return item["url"]
     raise ValueError(
         "Item %r does not contain a reference to the 'id'. "
         " Please included it in the serializer." % item
