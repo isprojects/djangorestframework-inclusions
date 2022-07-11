@@ -50,7 +50,7 @@ class InclusionJSONRenderer(renderers.JSONRenderer):
         request = renderer_context.get("request")
 
         inclusions = self.loader_class(
-            get_allowed_paths(request, view)
+            get_allowed_paths(request, view=view)
         ).inclusions_dict(serializer)
 
         render_data = OrderedDict()
@@ -80,7 +80,7 @@ class InclusionJSONRenderer(renderers.JSONRenderer):
         return super().render(render_data, accepted_media_type, renderer_context)
 
 
-def get_allowed_paths(request, view):
+def get_allowed_paths(request, view=None):
     if getattr(view, "get_requested_inclusions", None):
         include = view.get_requested_inclusions(request)
     else:
