@@ -1,5 +1,4 @@
 from django.urls import include, path
-
 from rest_framework.routers import DefaultRouter
 
 from .viewsets import (
@@ -42,9 +41,7 @@ router.register(r"proto/mainobjects", MainObjectViewSet)
 router.register(r"proto/e", EViewSet)
 
 router.register(r"proto/basic", BasicViewSet)
-router.register(
-    r"proto/custom-basic", CustomRendererBasicViewSet, basename="custom-basic"
-)
+router.register(r"proto/custom-basic", CustomRendererBasicViewSet, basename="custom-basic")
 router.register(
     r"proto/custom-parent",
     CustomRendererChildPropsViewSet,
@@ -54,20 +51,14 @@ router.register(r"proto/basicm2m", BasicM2MViewSet)
 router.register(r"proto/modelwithproperty", ModelWithPropertyViewSet)
 router.register(r"proto/modelwithoptionalsub", ModelWithOptionalSubViewSet)
 
-router.register(
-    r"proto/tags-hyperlinked", HyperlinkedTagViewSet, basename="tag-hyperlinked"
-)
-router.register(
-    r"proto/children-hyperlinked", HyperlinkedChildViewSet, basename="child-hyperlinked"
-)
+router.register(r"proto/tags-hyperlinked", HyperlinkedTagViewSet, basename="tag-hyperlinked")
+router.register(r"proto/children-hyperlinked", HyperlinkedChildViewSet, basename="child-hyperlinked")
 router.register(
     r"proto/childconfigs-hyperlinked",
     HyperlinkedChildPropsViewSet,
     basename="childprops-hyperlinked",
 )
-router.register(
-    r"proto/parent-hyperlinked", HyperlinkedParentViewSet, basename="parent-hyperlinked"
-)
+router.register(r"proto/parent-hyperlinked", HyperlinkedParentViewSet, basename="parent-hyperlinked")
 
 
 urlpatterns = [path("api/", include(router.urls))]

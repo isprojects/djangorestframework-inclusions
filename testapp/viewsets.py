@@ -57,9 +57,7 @@ class BasicViewSet(CommonMixin, viewsets.ModelViewSet):
 
     @action(detail=False)
     def many(self, request, *args, **kwargs):
-        serializer = BasicSerializer(
-            instance=Basic.objects.all().order_by("id"), many=True
-        )
+        serializer = BasicSerializer(instance=Basic.objects.all().order_by("id"), many=True)
         return Response(serializer.data)
 
 

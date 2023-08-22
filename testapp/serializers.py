@@ -237,9 +237,7 @@ class SecondLevelRelatedObjectSerializer(serializers.ModelSerializer):
 class RelatedObjectSerializer(serializers.ModelSerializer):
     inclusion_serializers = {"a": ASerializer}
 
-    secondlevelrelatedobject_set = SecondLevelRelatedObjectSerializer(
-        many=True, read_only=True
-    )
+    secondlevelrelatedobject_set = SecondLevelRelatedObjectSerializer(many=True, read_only=True)
 
     class Meta:
         model = RelatedObject

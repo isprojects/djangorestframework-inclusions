@@ -7,9 +7,7 @@ class Company(models.Model):
 
 class Basic(models.Model):
     name = models.CharField(max_length=50)
-    company = models.ForeignKey(
-        Company, null=True, on_delete=models.PROTECT, related_name="+"
-    )
+    company = models.ForeignKey(Company, null=True, on_delete=models.PROTECT, related_name="+")
 
 
 class BasicM2M(models.Model):
@@ -31,9 +29,7 @@ class Parent(models.Model):
     name = models.CharField(max_length=50)
     tags = models.ManyToManyField("Tag")
 
-    favourite_child = models.ForeignKey(
-        "Child", null=True, on_delete=models.SET_NULL, related_name="+"
-    )
+    favourite_child = models.ForeignKey("Child", null=True, on_delete=models.SET_NULL, related_name="+")
 
     class Meta:
         ordering = ("id",)  # NOTE: don't do this in real models
@@ -120,9 +116,7 @@ class RelatedObject(models.Model):
 
 class SecondLevelRelatedObject(models.Model):
     main = models.ForeignKey(MainObject, null=True, on_delete=models.CASCADE)
-    related_object = models.ForeignKey(
-        RelatedObject, null=True, on_delete=models.CASCADE
-    )
+    related_object = models.ForeignKey(RelatedObject, null=True, on_delete=models.CASCADE)
 
 
 # a model with a property that's exposed directly

@@ -1,5 +1,4 @@
 from django.urls import reverse
-
 from rest_framework.test import APITestCase
 
 from testapp.models import (
@@ -165,9 +164,7 @@ class ReferenceTests(InclusionsMixin, APITestCase):
             },
             "inclusions": {"testapp.Tag": [{"id": self.tag2.id, "name": "are"}]},
         }
-        self.assertResponseData(
-            "parent-detail", expected, pk=self.parent2.pk, params={"include": "*"}
-        )
+        self.assertResponseData("parent-detail", expected, pk=self.parent2.pk, params={"include": "*"})
 
     def test_nested_include(self):
         expected = {
@@ -198,6 +195,8 @@ class ReferenceTests(InclusionsMixin, APITestCase):
         )
 
     def test_nested_include_hyperlinked(self):
+        child2 = reverse("child-hyperlinked-detail", kwargs={"pk": self.child2.pk})
+        childprops = reverse("childprops-hyperlinked-detail", kwargs={"pk": self.childprops.pk})
         expected = {
             "data": {
                 "url": f"http://testserver{reverse('child-hyperlinked-detail', kwargs={'pk': self.child2.pk})}",
@@ -208,10 +207,10 @@ class ReferenceTests(InclusionsMixin, APITestCase):
                         f"http://testserver{reverse('tag-hyperlinked-detail', kwargs={'pk': self.tag1.pk})}",
                         f"http://testserver{reverse('tag-hyperlinked-detail', kwargs={'pk': self.tag2.pk})}",
                     ],
-                    "favourite_child": f"http://testserver{reverse('child-hyperlinked-detail', kwargs={'pk': self.child2.pk})}",
+                    "favourite_child": f"http://testserver{child2}",
                 },
                 "name": "Children of Men",
-                "childprops": f"http://testserver{reverse('childprops-hyperlinked-detail', kwargs={'pk': self.childprops.pk})}",
+                "childprops": f"http://testserver{childprops}",
                 "tags": [],
             },
             "inclusions": {
@@ -254,14 +253,10 @@ class ReferenceTests(InclusionsMixin, APITestCase):
                     {"id": self.tag1.id, "name": "you"},
                     {"id": self.tag2.id, "name": "are"},
                 ],
-                "testapp.ChildProps": [
-                    {"id": self.childprops.id, "child": self.child2.pk}
-                ],
+                "testapp.ChildProps": [{"id": self.childprops.id, "child": self.child2.pk}],
             },
         }
-        self.assertResponseData(
-            "child-detail", expected, params={"include": "*"}, pk=self.child2.pk
-        )
+        self.assertResponseData("child-detail", expected, params={"include": "*"}, pk=self.child2.pk)
 
     def test_include_all_list(self):
         expected = {
@@ -300,9 +295,7 @@ class ReferenceTests(InclusionsMixin, APITestCase):
                     {"id": self.tag2.id, "name": "are"},
                     {"id": self.tag3.id, "name": "it"},
                 ],
-                "testapp.ChildProps": [
-                    {"id": self.childprops.id, "child": self.child2.pk}
-                ],
+                "testapp.ChildProps": [{"id": self.childprops.id, "child": self.child2.pk}],
             },
         }
         self.assertResponseData("child-list", expected, params={"include": "*"})
@@ -321,11 +314,7 @@ class ReferenceTests(InclusionsMixin, APITestCase):
                 },
                 "tags": [],
             },
-            "inclusions": {
-                "testapp.ChildProps": [
-                    {"id": self.childprops.id, "child": self.child2.id}
-                ]
-            },
+            "inclusions": {"testapp.ChildProps": [{"id": self.childprops.id, "child": self.child2.id}]},
         }
         self.assertResponseData(
             "child-detail",
@@ -467,9 +456,7 @@ class ReferenceTests(InclusionsMixin, APITestCase):
     def test_post(self):
         url = reverse("parent-list")
 
-        response = self.client.post(
-            url, {"name": "Papa Post", "tags": [self.tag2.id], "favourite_child": None}
-        )
+        response = self.client.post(url, {"name": "Papa Post", "tags": [self.tag2.id], "favourite_child": None})
 
         json = response.json()
         json["data"].pop("id")

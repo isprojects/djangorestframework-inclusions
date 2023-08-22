@@ -1,6 +1,5 @@
-from django.urls import reverse
-
 import pytest
+from django.urls import reverse
 from rest_framework import serializers
 
 from rest_framework_inclusions.core import InclusionLoader
@@ -74,9 +73,9 @@ def test_only_inclusion_in_database():
 
     model = Model(name="A", company=company)
 
-    assert InclusionLoader(None).inclusions_dict(
-        NonModelSerializer(instance=model)
-    ) == {"testapp.Company": [{"id": company.id, "name": "SKYNET"}]}
+    assert InclusionLoader(None).inclusions_dict(NonModelSerializer(instance=model)) == {
+        "testapp.Company": [{"id": company.id, "name": "SKYNET"}]
+    }
 
 
 @pytest.mark.django_db
@@ -166,7 +165,5 @@ def test_basic_custom_response_keys(client):
 
     assert response.json() == {
         "custom_data": {"company": company.id, "name": "You're basic"},
-        "custom_inclusions": {
-            "prefix:testapp.Company": [{"id": company.id, "name": "SKYNET"}]
-        },
+        "custom_inclusions": {"prefix:testapp.Company": [{"id": company.id, "name": "SKYNET"}]},
     }

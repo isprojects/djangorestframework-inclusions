@@ -115,9 +115,7 @@ class InclusionsLoadInclusionsTests(InclusionsMixin, APITestCase):
             },
         }
 
-        self.assertResponseData(
-            "child3-detail", expected, pk=child2.pk, params={"include": "*"}
-        )
+        self.assertResponseData("child3-detail", expected, pk=child2.pk, params={"include": "*"})
 
     @unittest.skip("Not implemented yet")
     def test_inclusion_adds_more_objects(self):
@@ -149,9 +147,7 @@ class InclusionsLoadInclusionsTests(InclusionsMixin, APITestCase):
             "next": None,
             "data": [{"id": e.id, "d": d.id}],
             "inclusions": {
-                "testapp.D": [
-                    {"id": d.id, "tags1": [tag1.id], "tags2": [tag1.id, tag3.id]}
-                ],
+                "testapp.D": [{"id": d.id, "tags1": [tag1.id], "tags2": [tag1.id, tag3.id]}],
                 "testapp.Tag": [
                     {"id": tag1.id, "name": "tag 1"},
                     {"id": tag3.id, "name": "tag 3"},

@@ -42,16 +42,12 @@ class InclusionJSONRenderer(renderers.JSONRenderer):
                 return None
             action = getattr(view, view.action)
             if should_skip_inclusions(action, serializer):
-                logger.debug(
-                    "Skipping inclusion machinery for custom action %r", action
-                )
+                logger.debug("Skipping inclusion machinery for custom action %r", action)
                 return None
 
         request = renderer_context.get("request")
 
-        inclusions = self.loader_class(
-            get_allowed_paths(request, view=view)
-        ).inclusions_dict(serializer)
+        inclusions = self.loader_class(get_allowed_paths(request, view=view)).inclusions_dict(serializer)
 
         render_data = OrderedDict()
 
@@ -70,9 +66,7 @@ class InclusionJSONRenderer(renderers.JSONRenderer):
 
     def render(self, data, accepted_media_type=None, renderer_context=None):
         render_data = self._render_inclusions(data, renderer_context)
-        allowed_check = getattr(
-            renderer_context["view"], "include_allowed", lambda: True
-        )
+        allowed_check = getattr(renderer_context["view"], "include_allowed", lambda: True)
         skip_includes = not allowed_check()
 
         if not render_data or skip_includes:
@@ -95,9 +89,7 @@ def get_allowed_paths(request, view=None):
     return [tuple(entry.split(".")) for entry in include.split(",")]
 
 
-def should_skip_inclusions(
-    action: Callable, serializer: serializers.Serializer
-) -> bool:
+def should_skip_inclusions(action: Callable, serializer: serializers.Serializer) -> bool:
     """
     Determine if the inclusion machinery needs to be skipped or not.
 
@@ -126,9 +118,5 @@ def has_inclusion_serializers(serializer: serializers.Serializer) -> bool:
     if inclusion_serializers:
         return True
 
-    child_serializers = (
-        child
-        for child in serializer.fields.values()
-        if isinstance(child, serializers.BaseSerializer)
-    )
+    child_serializers = (child for child in serializer.fields.values() if isinstance(child, serializers.BaseSerializer))
     return any(has_inclusion_serializers(child) for child in child_serializers)
