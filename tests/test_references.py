@@ -19,7 +19,6 @@ from .mixins import InclusionsMixin
 
 
 class ReferenceTests(InclusionsMixin, APITestCase):
-
     maxDiff = None
 
     @classmethod

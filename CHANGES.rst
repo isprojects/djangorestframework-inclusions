@@ -1,7 +1,7 @@
 1.2.0 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Make `djangorestframework-inclusions` compatible with both Python 3.9 and 3.11 and both Django 3.2 and 4.2
 
 
 1.1.0 (2020-03-26)

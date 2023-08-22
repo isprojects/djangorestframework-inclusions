@@ -63,7 +63,6 @@ class BasicM2MSerializer(serializers.ModelSerializer):
 
 
 class ParentSerializer(serializers.ModelSerializer):
-
     inclusion_serializers = {"tags": TagSerializer}
 
     class Meta:
@@ -155,7 +154,6 @@ class HyperlinkedChildSerializer(serializers.HyperlinkedModelSerializer):
 
 
 class ChildSerializer2(serializers.ModelSerializer):
-
     inclusion_serializers = {"parent": ParentSerializer, "tags": TagSerializer}
 
     class Meta:
@@ -164,7 +162,6 @@ class ChildSerializer2(serializers.ModelSerializer):
 
 
 class ChildSerializer3(serializers.ModelSerializer):
-
     inclusion_serializers = {"parent": ParentSerializer2}
 
     class Meta:
