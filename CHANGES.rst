@@ -1,4 +1,4 @@
-1.2.0 (unreleased)
+1.2.0 (2023-09-22)
 ------------------
 
 - Make `djangorestframework-inclusions` compatible with both Python 3.9 and 3.11 and both Django 3.2 and 4.2
