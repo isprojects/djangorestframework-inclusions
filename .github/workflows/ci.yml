@@ -14,8 +14,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.9", "3.11"]
-        DJANGO: ["3.2", "4.2"]
+        python-version: ["3.11", "3.12", "3.13"]
+        DJANGO: ["4.2", "5.2"]
 
     steps:
       - uses: actions/checkout@v3
