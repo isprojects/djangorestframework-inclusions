@@ -103,3 +103,7 @@ venv.bak/
 
 # mypy
 .mypy_cache/
+
+# OS cache
+thumbs.db
+.DS_Store
